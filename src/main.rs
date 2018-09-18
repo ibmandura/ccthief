@@ -61,9 +61,7 @@ fn visit<'a>(
     }
 
     entity.visit_children(|_, child| {
-        println!("Child: {}", get_name(&child));
-        if let Some(def) = child.get_definition() {
-            println!("Child def: {}, {:?}", get_name(&def), get_path(&def));
+        for def in child.get_definition().into_iter().chain(child.get_reference()) {
             if sym_table.contains_key(&def) {
                 desc.deps.insert(def);
             }
@@ -145,7 +143,6 @@ fn extract_symbols<'a>(
             if let Some(name) = entity.get_name() {
                 if target_names.contains(&name) {
                     q.push_back(entity);
-                    println!("Adding {} at ({}) to start list", get_name(entity), get_location(entity));
                 }
             }
         }
@@ -180,7 +177,7 @@ fn extract_symbols<'a>(
 
     let used_macros = visited.iter()
         .filter(|entity| entity.get_kind() == EntityKind::MacroExpansion)
-        .map(|e| e.clone())
+        .map(|e| e.clone().get_reference().unwrap())
         .collect::<HashSet<Entity>>();
 
     for entity in used_macros {
@@ -192,7 +189,7 @@ fn extract_symbols<'a>(
 
 fn main() {
     let clang = Clang::new().unwrap();
-    let index = Index::new(&clang, false, false);
+    let index = Index::new(&clang, false, true);
 
     let sources = vec!["examples/simple.c", "examples/simple_impl.c"]; ////vec!["../libart/src/art.c"]; //
     let targets: Vec<String> = vec![String::from("main")];
@@ -239,8 +236,6 @@ fn main() {
         }
     }
 
-    println!("system_includes: {:?}", system_includes);
-
     // Let's generate a dependency graph of symbols
     for tu in &tus {
         let mut macros = BTreeMap::new();
@@ -265,12 +260,6 @@ fn main() {
             }
             if child.is_definition() || child.is_declaration() {
                 let desc = visit(child, &mut sym_table, &macros);
-
-                print!("{} -> ", get_name(&child));
-                for dep in &desc.deps {
-                    print!("{}, ", get_name(&dep));
-                }
-                println!();
                 sym_table.insert(child, desc);
             }
         }
@@ -385,23 +374,6 @@ fn main() {
                 })
                 .collect::<HashSet<CanonicalPath>>()
         };
-
-        for (file, includes) in &includes_per_file {
-            println!("includes in: {:?}", file);
-            for include in includes {
-                println!("  {}", get_name(&include.0));
-            }
-        }
-
-        println!();
-        println!("unparsable_includes: {:?}", unparsable_includes);
-
-        for (file, symbols) in &symbols_per_file {
-            println!("symbols in: {:?}", file);
-            for include in symbols {
-                println!("  {}", get_name(&include.0));
-            }
-        }
 
         let source_directory = PathBuf::from("examples/").canonicalize().unwrap();
         let target_directory = PathBuf::from("target_dir/");

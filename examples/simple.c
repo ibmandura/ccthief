@@ -4,8 +4,7 @@
 #include <string.h>
 
 int main() {
-    //int x = nes(1);
-    int x = 0;
+    int x = nes(1);
     int len = strlen("kurcina") + x;
     printf("%d\n", len);
     return x;
