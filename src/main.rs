@@ -65,14 +65,7 @@ fn visit<'a>(
             if sym_table.contains_key(&def) {
                 desc.deps.insert(def);
             }
-            if let Some(t) = def.get_type() {
-                if let Some(t) = t.get_declaration() {
-                    if sym_table.contains_key(&t) {
-                        desc.deps.insert(t);
-                    }
-                }
-            }
-            if let Some(t) = def.get_typedef_underlying_type() {
+            for t in def.get_type().into_iter().chain(def.get_typedef_underlying_type()) {}
                 if let Some(t) = t.get_declaration() {
                     if sym_table.contains_key(&t) {
                         desc.deps.insert(t);
