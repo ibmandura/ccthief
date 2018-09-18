@@ -155,15 +155,9 @@ fn extract_symbols<'a>(
 
         let desc = &sym_table[&entity];
 
-        for dep in &desc.deps {
+        for dep in desc.deps.iter().chain(desc.definitions.iter()) {
             if !visited.contains(dep) {
                 q.push_back(dep);
-            }
-        }
-
-        for def in &desc.definitions {
-            if !visited.contains(def) {
-                q.push_back(def);
             }
         }
     }
