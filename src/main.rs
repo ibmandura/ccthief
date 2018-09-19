@@ -163,9 +163,9 @@ fn extract_symbols<'a>(
     }
 
     let used_macros = visited.iter()
-        .filter(|entity| entity.get_kind() == EntityKind::MacroExpansion)
+        .filter(|e| e.get_kind() == EntityKind::MacroExpansion)
         .map(|e| e.clone().get_reference().unwrap())
-        .collect::<HashSet<Entity>>();
+        .collect::<HashSet<_>>();
 
     for entity in used_macros {
         visited.insert(entity.clone());
@@ -179,12 +179,12 @@ fn main() {
     let index = Index::new(&clang, false, true);
 
     let sources = vec!["examples/simple.c", "examples/simple_impl.c"]; ////vec!["../libart/src/art.c"]; //
-    let targets: Vec<String> = vec![String::from("main")];
+    let targets = vec![String::from("main")];
 
     let mut tus = vec![];
     let mut sym_table = HashMap::new();
     let mut includes = HashSet::new();
-    let mut system_includes: HashMap<String, CanonicalPath> = HashMap::new();
+    let mut system_includes = HashMap::new();
 
     for source in &sources {
         println!("Parsing {}...", source);
@@ -311,7 +311,7 @@ fn main() {
         }
 
         let (symbols_per_file, unparsable_includes) = {
-            let mut ret: HashMap<CanonicalPath, BTreeSet<OrdSymbol>> = HashMap::new();
+            let mut ret = HashMap::new();
             let mut ui = HashSet::new();
 
             for sym in &extracted_symbols {
@@ -349,7 +349,7 @@ fn main() {
         };
 
         let files_to_process = {
-            let uifs = unparsable_includes.iter().map(normalize_include_path).collect::<HashSet<CanonicalPath>>();
+            let uifs = unparsable_includes.iter().map(normalize_include_path).collect::<HashSet<_>>();
 
             sources.iter()
                 .map(|s| CanonicalPath::new(PathBuf::from(s)))
@@ -359,7 +359,7 @@ fn main() {
                     let name = path.0.file_name().unwrap();
                     !system_includes.contains_key(&String::from(name.to_str().unwrap()))
                 })
-                .collect::<HashSet<CanonicalPath>>()
+                .collect::<HashSet<_>>()
         };
 
         let source_directory = PathBuf::from("examples/").canonicalize().unwrap();
@@ -395,7 +395,7 @@ fn main() {
             }
 
             let source_file = fs::File::open(&file.0).unwrap();
-            let source_lines = io::BufReader::new(source_file).lines().collect::<Vec<Result<String, io::Error>>>();
+            let source_lines = io::BufReader::new(source_file).lines().collect::<Vec<_>>();
             let mut target_file = fs::File::create(target_directory.join(file.0.strip_prefix(&source_directory).unwrap())).unwrap();
 
             for sym in all_output_symbols {
